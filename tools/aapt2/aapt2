@@ -1,0 +1,30 @@
+#!/bin/sh
+# AAPT2 wrapper for the ReelReminder build.
+# On ARM64 this uses the project-local Termux AAPT2 build. On x86_64 it
+# delegates to the normal Android SDK build-tools binary.
+HERE="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+ARCH="$(uname -m)"
+
+case "$ARCH" in
+    x86_64|amd64)
+        LOCAL_SDK="$(sed -n 's/^sdk\.dir=//p' "$HERE/../../local.properties" 2>/dev/null | head -n 1)"
+        for SDK in "${ANDROID_HOME:-}" "${ANDROID_SDK_ROOT:-}" "$LOCAL_SDK" "$HOME/android-sdk" "$HOME/Android/Sdk"; do
+            [ -n "$SDK" ] || continue
+            for BT in 36.0.0 35.0.0 34.0.0; do
+                if [ -x "$SDK/build-tools/$BT/aapt2" ]; then
+                    exec "$SDK/build-tools/$BT/aapt2" "$@"
+                fi
+            done
+        done
+        echo "AAPT2 wrapper: no x86_64 AAPT2 found. Set ANDROID_HOME or remove android.aapt2FromMavenOverride." >&2
+        exit 1
+        ;;
+esac
+
+if [ ! -x "$HERE/aapt2-bin" ] || [ ! -d /data/data/com.termux/files/usr/lib ]; then
+    echo "AAPT2 wrapper: ARM64 AAPT2 is only bundled for the Termux build host." >&2
+    exit 1
+fi
+
+export LD_LIBRARY_PATH="$HERE/lib:/data/data/com.termux/files/usr/lib"
+exec "$HERE/aapt2-bin" "$@"

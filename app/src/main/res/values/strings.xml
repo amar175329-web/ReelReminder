@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ReelReminder</string>
+    <string name="home_subtitle">Your saved reels, right on time</string>
+    <string name="add_reminder">New reminder</string>
+    <string name="empty_title">No reels saved yet</string>
+    <string name="empty_body">Share a reel from Instagram and choose ReelReminder, or tap + to paste a link.</string>
+    <string name="empty_step_1">Open a reel in Instagram and tap Share.</string>
+    <string name="empty_step_2">Choose ReelReminder in the share sheet.</string>
+    <string name="empty_step_3">Pick a date and time, then save.</string>
+    <string name="empty_cta">Schedule your first reel</string>
+    <string name="share_hint">Tip: share a reel directly from Instagram.</string>
+
+    <string name="notification_default_title">Your saved reel</string>
+    <string name="notification_channel_name">Reel reminders</string>
+    <string name="notification_channel_description">Notifications for your saved reels</string>
+    <string name="action_snooze">Snooze 10 min</string>
+    <string name="action_done">Done</string>
+    <string name="snoozed_confirmation">Snoozed for 10 minutes</string>
+
+    <string name="schedule_new_title">Schedule a reel</string>
+    <string name="schedule_edit_title">Edit reel</string>
+    <string name="link_label">Reel link</string>
+    <string name="link_placeholder">https://www.instagram.com/reel/…</string>
+    <string name="link_error_empty">Add a link</string>
+    <string name="link_error_invalid">Enter an http or https link</string>
+    <string name="note_label">Note (optional)</string>
+    <string name="note_placeholder">e.g. Send this to a friend</string>
+    <string name="repeat_label">Remind me</string>
+    <string name="repeat_once">Once</string>
+    <string name="repeat_daily">Daily</string>
+    <string name="repeat_weekly">Weekly</string>
+    <string name="date_label">Date</string>
+    <string name="time_label">Time</string>
+    <string name="weekday_label">Repeat on</string>
+    <string name="days_error">Choose at least one day</string>
+    <string name="once_past_error">Choose a future date and time</string>
+    <string name="next_reminder_label">Next reminder</string>
+    <string name="next_reminder_none">Not scheduled</string>
+    <string name="save_new">Schedule reminder</string>
+    <string name="save_edit">Save changes</string>
+    <string name="saving">Saving…</string>
+    <string name="edit_paused_hint">Saving changes will resume this reminder.</string>
+
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
+    <string name="done">Done</string>
+    <string name="paused">Paused</string>
+    <string name="completed">Completed</string>
+    <string name="delete_dialog_title">Delete this reel?</string>
+    <string name="delete_dialog_body">The reminder and its schedule will be removed.</string>
+
+    <string name="notifications_off_title">Notifications are off</string>
+    <string name="notifications_off_body">Turn on notifications so ReelReminder can alert you.</string>
+    <string name="exact_alarms_off_title">Exact alarms are off</string>
+    <string name="exact_alarms_off_body">Reminders may be a few minutes late. Allow exact alarms for on-time alerts.</string>
+    <string name="enable">Enable</string>
+    <string name="allow">Allow</string>
+    <string name="settings">Settings</string>
+
+    <string name="today_at">Today, %1$s</string>
+    <string name="tomorrow_at">Tomorrow, %1$s</string>
+    <string name="weekly_days">Weekly · %1$s</string>
+    <string name="reminder_saved">Reminder saved</string>
+    <string name="exact_alarm_saved_warning">Saved. Exact alarms are off, so this reminder may be delayed.</string>
+    <string name="share_no_link">No link found in the shared text</string>
+
+    <string name="cd_back">Back</string>
+    <string name="cd_edit">Edit reminder</string>
+    <string name="cd_delete">Delete reminder</string>
+    <string name="cd_pause">Pause reminder</string>
+    <string name="cd_resume">Resume reminder</string>
+    <string name="cd_add">Add reminder</string>
+    <string name="cd_link">Link</string>
+    <string name="cd_date">Choose date</string>
+    <string name="cd_time">Choose time</string>
+    <string name="cd_warning">Warning</string>
+    <string name="cd_empty">No reminders</string>
+    <string name="cd_status">Status</string>
+</resources>

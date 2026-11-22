@@ -1,0 +1,122 @@
+package com.reelreminder.app
+
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.provider.Settings
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.core.content.ContextCompat
+import com.reelreminder.app.ui.AppViewModel
+import com.reelreminder.app.ui.ReelReminderApp
+import com.reelreminder.app.ui.theme.ReelReminderTheme
+import com.reelreminder.app.util.UrlExtractor
+
+class MainActivity : ComponentActivity() {
+
+    private val viewModel: AppViewModel by viewModels()
+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        // Compose refreshes the permission banner on the next ON_RESUME.
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            ReelReminderTheme {
+                ReelReminderApp(
+                    viewModel = viewModel,
+                    onRequestNotificationSettings = ::openNotificationSettings,
+                    onRequestExactAlarms = ::openExactAlarmSettings
+                )
+            }
+        }
+
+        handleShareIntent(intent)
+        maybeRequestNotificationPermission()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleShareIntent(intent)
+    }
+
+    private fun handleShareIntent(intent: Intent?) {
+        if (intent == null) return
+        if (intent.action != Intent.ACTION_SEND) return
+        if (intent.type?.startsWith("text/") != true) return
+
+        val text = intent.getStringExtra(Intent.EXTRA_TEXT)
+            ?: intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
+        val url = UrlExtractor.extractFirstUrl(text)
+
+        if (url != null) {
+            viewModel.onSharedUrl(url)
+        } else {
+            Toast.makeText(this, R.string.share_no_link, Toast.LENGTH_LONG).show()
+        }
+
+        // Do not process the same share twice if the activity is reused.
+        intent.removeExtra(Intent.EXTRA_TEXT)
+    }
+
+    private fun maybeRequestNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        if (!prefs.getBoolean(KEY_ASKED_NOTIFICATIONS, false)) {
+            prefs.edit().putBoolean(KEY_ASKED_NOTIFICATIONS, true).apply()
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    private fun openNotificationSettings() {
+        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+            putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+        }
+        runCatching { startActivity(intent) }
+            .onFailure { openAppDetailsSettings() }
+    }
+
+    private fun openExactAlarmSettings() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        val intent = Intent(
+            Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+            Uri.parse("package:$packageName")
+        )
+        runCatching { startActivity(intent) }
+            .onFailure { openAppDetailsSettings() }
+    }
+
+    private fun openAppDetailsSettings() {
+        startActivity(
+            Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:$packageName")
+            )
+        )
+    }
+
+    companion object {
+        private const val PREFS_NAME = "reelreminder_prefs"
+        private const val KEY_ASKED_NOTIFICATIONS = "asked_notifications"
+    }
+}
