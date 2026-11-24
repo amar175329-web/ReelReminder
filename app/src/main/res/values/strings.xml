@@ -9,7 +9,7 @@
     <string name="empty_step_2">Choose ReelReminder in the share sheet.</string>
     <string name="empty_step_3">Pick a date and time, then save.</string>
     <string name="empty_cta">Schedule your first reel</string>
-    <string name="share_hint">Tip: share a reel directly from Instagram.</string>
+    <string name="share_hint">Tip: Share → “Share to…” → ReelReminder</string>
 
     <string name="notification_default_title">Your saved reel</string>
     <string name="notification_channel_name">Reel reminders</string>
@@ -23,24 +23,48 @@
     <string name="link_label">Reel link</string>
     <string name="link_placeholder">https://www.instagram.com/reel/…</string>
     <string name="link_error_empty">Add a link</string>
-    <string name="link_error_invalid">Enter an http or https link</string>
+    <string name="link_error_invalid">Only Instagram links work here</string>
     <string name="note_label">Note (optional)</string>
-    <string name="note_placeholder">e.g. Send this to a friend</string>
-    <string name="repeat_label">Remind me</string>
+    <string name="note_placeholder">Why did you save it?</string>
+    <string name="category_label">Category</string>
+    <string name="when_label">When</string>
+    <string name="repeat_label">Repeat</string>
     <string name="repeat_once">Once</string>
     <string name="repeat_daily">Daily</string>
     <string name="repeat_weekly">Weekly</string>
     <string name="date_label">Date</string>
     <string name="time_label">Time</string>
-    <string name="weekday_label">Repeat on</string>
-    <string name="days_error">Choose at least one day</string>
+    <string name="weekday_label">On these days</string>
+    <string name="days_error">Pick at least one day</string>
     <string name="once_past_error">Choose a future date and time</string>
     <string name="next_reminder_label">Next reminder</string>
     <string name="next_reminder_none">Not scheduled</string>
-    <string name="save_new">Schedule reminder</string>
+    <string name="save_new">Save reminder</string>
     <string name="save_edit">Save changes</string>
     <string name="saving">Saving…</string>
     <string name="edit_paused_hint">Saving changes will resume this reminder.</string>
+
+    <string name="tab_today">Today</string>
+    <string name="tab_vault">Vault</string>
+    <string name="greeting_morning">Good morning</string>
+    <string name="greeting_afternoon">Good afternoon</string>
+    <string name="greeting_evening">Good evening</string>
+    <string name="today_subtitle">Here’s what you saved for today.</string>
+    <string name="todays_plan">Today’s plan</string>
+    <string name="watched_count">%1$d of %2$d watched</string>
+    <string name="vault_subtitle">Your reels, sorted by when you need them.</string>
+    <string name="new_collection">+ New collection</string>
+    <string name="collection_name_hint">Name it, then save</string>
+    <string name="vault_back">‹ Vault</string>
+    <string name="collection_stats">%1$d %2$s · %3$d watched today</string>
+    <string name="collection_empty_title">Nothing here yet</string>
+    <string name="collection_empty_body">Share a reel from Instagram and pick %1$s.</string>
+    <string name="clipboard_banner_title">Save copied reel?</string>
+    <string name="clipboard_save">Save</string>
+    <string name="in_app_tip">Tip: In Instagram, tap Share → “Share to…” to find ReelReminder</string>
+
+    <string name="shortcut_share_label">Save reel</string>
+    <string name="shortcut_share_long_label">Save reel to ReelReminder</string>
 
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
@@ -67,7 +91,7 @@
     <string name="weekly_days">Weekly · %1$s</string>
     <string name="reminder_saved">Reminder saved</string>
     <string name="exact_alarm_saved_warning">Saved. Exact alarms are off, so this reminder may be delayed.</string>
-    <string name="share_no_link">No link found in the shared text</string>
+    <string name="share_no_link">Only Instagram links (reels, posts, tv) are supported.</string>
 
     <string name="cd_back">Back</string>
     <string name="cd_edit">Edit reminder</string>

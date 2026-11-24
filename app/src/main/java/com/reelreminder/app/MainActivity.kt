@@ -14,6 +14,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
+import androidx.core.content.pm.ShortcutInfoCompat
+import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.graphics.drawable.IconCompat
 import com.reelreminder.app.ui.AppViewModel
 import com.reelreminder.app.ui.ReelReminderApp
 import com.reelreminder.app.ui.theme.ReelReminderTheme
@@ -44,6 +47,12 @@ class MainActivity : ComponentActivity() {
 
         handleShareIntent(intent)
         maybeRequestNotificationPermission()
+        publishSharingShortcut()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.checkClipboard(this)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -69,6 +78,26 @@ class MainActivity : ComponentActivity() {
 
         // Do not process the same share twice if the activity is reused.
         intent.removeExtra(Intent.EXTRA_TEXT)
+    }
+
+    /**
+     * Fix 1a: Sharing Shortcuts so ReelReminder ranks at the top in Instagram share sheet
+     */
+    private fun publishSharingShortcut() {
+        runCatching {
+            val shortcut = ShortcutInfoCompat.Builder(this, "share_reel")
+                .setShortLabel(getString(R.string.shortcut_share_label))
+                .setLongLabel(getString(R.string.shortcut_share_long_label))
+                .setIcon(IconCompat.createWithResource(this, R.drawable.app_logo))
+                .setIntent(
+                    Intent(Intent.ACTION_SEND)
+                        .setType("text/plain")
+                        .setClass(this, MainActivity::class.java)
+                )
+                .setCategories(setOf("com.reelreminder.app.category.SHARE_TARGET"))
+                .build()
+            ShortcutManagerCompat.pushDynamicShortcut(this, shortcut)
+        }
     }
 
     private fun maybeRequestNotificationPermission() {
