@@ -1,13 +1,18 @@
 package com.reelreminder.app.ui
 
 import android.app.Application
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.reelreminder.app.ReelReminderApplication
 import com.reelreminder.app.alarm.AlarmScheduler
+import com.reelreminder.app.data.Category
 import com.reelreminder.app.data.Reel
 import com.reelreminder.app.notifications.NotificationHelper
+import com.reelreminder.app.ui.components.AppTab
 import com.reelreminder.app.util.NextTriggerCalculator
+import com.reelreminder.app.util.UrlExtractor
 import java.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,8 +32,36 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         initialValue = emptyList()
     )
 
+    val categories: StateFlow<List<Category>> = repository.categories.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = Category.DEFAULT_CATEGORIES
+    )
+
+    private val _currentTab = MutableStateFlow(AppTab.TODAY)
+    val currentTab: StateFlow<AppTab> = _currentTab.asStateFlow()
+
+    private val _selectedCategory = MutableStateFlow<Category?>(null)
+    val selectedCategory: StateFlow<Category?> = _selectedCategory.asStateFlow()
+
     private val _pendingShareUrl = MutableStateFlow<String?>(null)
     val pendingShareUrl: StateFlow<String?> = _pendingShareUrl.asStateFlow()
+
+    private val _clipboardUrl = MutableStateFlow<String?>(null)
+    val clipboardUrl: StateFlow<String?> = _clipboardUrl.asStateFlow()
+
+    private var lastDismissedClipboardUrl: String? = null
+
+    fun selectTab(tab: AppTab) {
+        _currentTab.value = tab
+        if (tab == AppTab.TODAY) {
+            _selectedCategory.value = null
+        }
+    }
+
+    fun selectCategory(category: Category?) {
+        _selectedCategory.value = category
+    }
 
     fun onSharedUrl(url: String) {
         _pendingShareUrl.value = url
@@ -36,6 +69,38 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun consumeSharedUrl() {
         _pendingShareUrl.value = null
+    }
+
+    /**
+     * Fix 1b: Clipboard fallback: on app open/resume, if clipboard holds
+     * an instagram.com link, prompt the user "Save copied reel?".
+     */
+    fun checkClipboard(context: Context) {
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return
+        if (!clipboard.hasPrimaryClip()) return
+        val clip = clipboard.primaryClip ?: return
+        if (clip.itemCount == 0) return
+        val text = clip.getItemAt(0)?.text?.toString() ?: return
+        val url = UrlExtractor.extractFirstUrl(text)
+        if (url != null && url != lastDismissedClipboardUrl && _pendingShareUrl.value == null) {
+            _clipboardUrl.value = url
+        }
+    }
+
+    fun dismissClipboardUrl() {
+        lastDismissedClipboardUrl = _clipboardUrl.value
+        _clipboardUrl.value = null
+    }
+
+    fun toggleDone(reel: Reel) {
+        viewModelScope.launch {
+            repository.toggleDone(reel.id)
+            if (!reel.done) {
+                // If just marked done, cancel any pending alarm
+                scheduler.cancel(reel.id)
+                NotificationHelper.cancel(app, reel.id)
+            }
+        }
     }
 
     fun togglePause(reel: Reel) {
@@ -65,6 +130,29 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun addCategory(name: String) {
+        viewModelScope.launch {
+            val existing = repository.getAllCategories()
+            val (start, end) = Category.nextGradientPair(existing.size)
+            val newCat = Category(
+                name = name,
+                gradientStart = start,
+                gradientEnd = end,
+                isDefault = false
+            )
+            repository.insertCategory(newCat)
+        }
+    }
+
+    fun deleteCategory(category: Category) {
+        viewModelScope.launch {
+            repository.deleteCategory(category)
+            if (_selectedCategory.value?.id == category.id) {
+                _selectedCategory.value = null
+            }
+        }
+    }
+
     /**
      * Called after exact-alarm access is granted and on app start. It also
      * repairs alarms that were lost when the process was force-stopped.
@@ -74,9 +162,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             val now = System.currentTimeMillis()
             val from = Instant.ofEpochMilli(now).plusSeconds(1)
             repository.getActive().forEach { reel ->
-                // Keep a still-valid future trigger; only recompute missed ones.
-                // This avoids skipping a reminder when the app opens right at
-                // its scheduled minute.
                 val next = if (reel.nextTriggerAt > now) {
                     reel.nextTriggerAt
                 } else {

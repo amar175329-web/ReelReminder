@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.reelreminder.app.ReelReminderApplication
 import com.reelreminder.app.alarm.AlarmScheduler
+import com.reelreminder.app.data.Category
 import com.reelreminder.app.data.Reel
 import com.reelreminder.app.data.ReelRepository
 import com.reelreminder.app.data.ScheduleType
@@ -35,6 +36,7 @@ data class ScheduleUiState(
     val reelId: Long? = null,
     val url: String = "",
     val note: String = "",
+    val categoryId: Long = 1L,
     val type: ScheduleType = ScheduleType.ONCE,
     /** UTC midnight millis, matching Material 3's DatePicker contract. */
     val dateUtcMillis: Long = TimeUtils.localDateToUtcMillis(LocalDate.now().plusDays(1)),
@@ -63,7 +65,7 @@ class ScheduleViewModel(
     private var loadJob: Job? = null
     private var saveJob: Job? = null
 
-    fun start(editingId: Long?, sharedUrl: String?) {
+    fun start(editingId: Long?, sharedUrl: String?, defaultCategory: Long = 1L) {
         loadJob?.cancel()
         saveJob?.cancel()
         _state.value = ScheduleUiState(loading = true)
@@ -91,6 +93,7 @@ class ScheduleViewModel(
                     reelId = reel.id,
                     url = reel.url,
                     note = reel.note,
+                    categoryId = reel.categoryId,
                     type = reel.scheduleType,
                     dateUtcMillis = dateUtcMillis,
                     hour = time.hour,
@@ -104,6 +107,7 @@ class ScheduleViewModel(
                 _state.value = ScheduleUiState(
                     loading = false,
                     url = sharedUrl.orEmpty(),
+                    categoryId = defaultCategory,
                     type = ScheduleType.ONCE,
                     dateUtcMillis = TimeUtils.localDateToUtcMillis(default.toLocalDate()),
                     hour = default.hour,
@@ -121,6 +125,10 @@ class ScheduleViewModel(
 
     fun updateNote(value: String) {
         _state.update { it.copy(note = value) }
+    }
+
+    fun updateCategory(categoryId: Long) {
+        _state.update { it.copy(categoryId = categoryId) }
     }
 
     fun updateType(type: ScheduleType) {
@@ -167,7 +175,7 @@ class ScheduleViewModel(
         val trimmedUrl = current.url.trim()
         val urlError = when {
             trimmedUrl.isEmpty() -> UrlError.EMPTY
-            !UrlExtractor.isValidHttpUrl(trimmedUrl) -> UrlError.INVALID
+            !UrlExtractor.isValidInstagramUrl(trimmedUrl) -> UrlError.INVALID
             else -> null
         }
 
@@ -238,6 +246,7 @@ class ScheduleViewModel(
                     id = current.reelId ?: 0L,
                     url = trimmedUrl,
                     note = current.note.trim(),
+                    categoryId = current.categoryId,
                     scheduleType = current.type,
                     time = TimeUtils.formatTimeValue(current.hour, current.minute),
                     daysOfWeek = if (current.type == ScheduleType.WEEKLY) {
