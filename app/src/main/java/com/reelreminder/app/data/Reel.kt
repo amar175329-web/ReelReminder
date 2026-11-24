@@ -1,6 +1,7 @@
 package com.reelreminder.app.data
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
@@ -14,12 +15,16 @@ enum class ScheduleType {
     WEEKLY
 }
 
-@Entity(tableName = "reels")
+@Entity(
+    tableName = "reels",
+    indices = [Index(value = ["categoryId"])]
+)
 data class Reel(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0L,
     val url: String,
     val note: String = "",
+    val categoryId: Long = 1L,
     val scheduleType: ScheduleType = ScheduleType.ONCE,
     /** Local wall-clock time in HH:mm form. */
     val time: String = "09:00",

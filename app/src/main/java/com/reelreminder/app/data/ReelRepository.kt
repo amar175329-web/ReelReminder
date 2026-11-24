@@ -2,23 +2,51 @@ package com.reelreminder.app.data
 
 import kotlinx.coroutines.flow.Flow
 
-class ReelRepository(private val dao: ReelDao) {
-    val reels: Flow<List<Reel>> = dao.observeAll()
+class ReelRepository(
+    private val reelDao: ReelDao,
+    private val categoryDao: CategoryDao
+) {
+    val reels: Flow<List<Reel>> = reelDao.observeAll()
+    val categories: Flow<List<Category>> = categoryDao.observeAll()
 
-    suspend fun get(id: Long): Reel? = dao.getById(id)
+    suspend fun get(id: Long): Reel? = reelDao.getById(id)
 
-    suspend fun getActive(): List<Reel> = dao.getActive()
+    suspend fun getActive(): List<Reel> = reelDao.getActive()
 
-    suspend fun insert(reel: Reel): Long = dao.insert(reel)
+    suspend fun getReelsByCategory(categoryId: Long): List<Reel> = reelDao.getByCategory(categoryId)
 
-    suspend fun update(reel: Reel) = dao.update(reel)
+    fun observeReelsByCategory(categoryId: Long): Flow<List<Reel>> = reelDao.observeByCategory(categoryId)
 
-    suspend fun delete(reel: Reel) = dao.delete(reel)
+    suspend fun insert(reel: Reel): Long = reelDao.insert(reel)
 
-    suspend fun setPaused(id: Long, paused: Boolean) = dao.setPaused(id, paused)
+    suspend fun update(reel: Reel) = reelDao.update(reel)
 
-    suspend fun markDone(id: Long) = dao.setDone(id, done = true, nextTriggerAt = 0L)
+    suspend fun delete(reel: Reel) = reelDao.delete(reel)
+
+    suspend fun setPaused(id: Long, paused: Boolean) = reelDao.setPaused(id, paused)
+
+    suspend fun markDone(id: Long) = reelDao.setDone(id, done = true, nextTriggerAt = 0L)
+
+    suspend fun toggleDone(id: Long) {
+        val reel = reelDao.getById(id) ?: return
+        val newDone = !reel.done
+        reelDao.setDone(id, done = newDone, nextTriggerAt = if (newDone) 0L else reel.nextTriggerAt)
+    }
 
     suspend fun updateNextTrigger(id: Long, nextTriggerAt: Long) =
-        dao.updateNextTrigger(id, nextTriggerAt)
+        reelDao.updateNextTrigger(id, nextTriggerAt)
+
+    suspend fun getCategory(id: Long): Category? = categoryDao.getById(id)
+
+    suspend fun getAllCategories(): List<Category> = categoryDao.getAll()
+
+    suspend fun insertCategory(category: Category): Long = categoryDao.insert(category)
+
+    suspend fun updateCategory(category: Category) = categoryDao.update(category)
+
+    suspend fun deleteCategory(category: Category) {
+        // Reassign any reels in this category to default category 1
+        reelDao.reassignCategory(category.id, 1L)
+        categoryDao.delete(category)
+    }
 }

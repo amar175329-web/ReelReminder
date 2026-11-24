@@ -6,8 +6,9 @@ import com.reelreminder.app.data.ReelRepository
 import com.reelreminder.app.notifications.NotificationHelper
 
 class ReelReminderApplication : Application() {
-    val database: AppDatabase by lazy { AppDatabase.getInstance(this) }
-    val repository: ReelRepository by lazy { ReelRepository(database.reelDao()) }
+
+    val database by lazy { AppDatabase.getInstance(this) }
+    val repository by lazy { ReelRepository(database.reelDao(), database.categoryDao()) }
 
     override fun onCreate() {
         super.onCreate()

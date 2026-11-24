@@ -37,6 +37,37 @@ object NotificationHelper {
         manager.createNotificationChannel(channel)
     }
 
+    fun isInstagramInstalled(context: Context): Boolean {
+        return runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getPackageInfo(
+                    "com.instagram.android",
+                    PackageManager.PackageInfoFlags.of(0)
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getPackageInfo("com.instagram.android", 0)
+            }
+            true
+        }.getOrDefault(false)
+    }
+
+    /**
+     * Fix 2 & 4: Open via ACTION_VIEW with package com.instagram.android,
+     * fall back to browser. Keep ?igsh= params untouched.
+     * Set intent.data = Uri.parse(url) distinct per reel.
+     */
+    fun createOpenReelIntent(context: Context, url: String): Intent {
+        val uri = Uri.parse(url)
+        return Intent(Intent.ACTION_VIEW, uri).apply {
+            data = uri
+            if (isInstagramInstalled(context)) {
+                setPackage("com.instagram.android")
+            }
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+    }
+
     fun showReminder(context: Context, reel: Reel) {
         createChannel(context)
 
@@ -80,12 +111,11 @@ object NotificationHelper {
             )
 
         if (UrlExtractor.isValidHttpUrl(reel.url)) {
-            val openIntent = Intent(Intent.ACTION_VIEW, Uri.parse(reel.url)).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
+            val openIntent = createOpenReelIntent(context, reel.url)
+            // Fix 2: requestCode = reminder id, intent.data = Uri.parse(url), FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE
             val contentIntent = PendingIntent.getActivity(
                 context,
-                contentRequestCode(reel.id),
+                reel.id.toInt(),
                 openIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
@@ -118,9 +148,6 @@ object NotificationHelper {
 
     private fun notificationId(reelId: Long): Int =
         (reelId xor (reelId ushr 32)).toInt()
-
-    private fun contentRequestCode(reelId: Long): Int =
-        notificationId(reelId) xor 0x20000000
 
     private fun actionRequestCode(reelId: Long, action: String): Int =
         notificationId(reelId) xor action.hashCode()

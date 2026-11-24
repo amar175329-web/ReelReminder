@@ -18,6 +18,18 @@ interface ReelDao {
     )
     fun observeAll(): Flow<List<Reel>>
 
+    @Query(
+        """
+        SELECT * FROM reels
+        WHERE categoryId = :categoryId
+        ORDER BY done ASC, paused ASC, nextTriggerAt ASC, createdAt DESC
+        """
+    )
+    fun observeByCategory(categoryId: Long): Flow<List<Reel>>
+
+    @Query("SELECT * FROM reels WHERE categoryId = :categoryId")
+    suspend fun getByCategory(categoryId: Long): List<Reel>
+
     @Query("SELECT * FROM reels WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): Reel?
 
@@ -41,4 +53,7 @@ interface ReelDao {
 
     @Query("UPDATE reels SET nextTriggerAt = :nextTriggerAt WHERE id = :id")
     suspend fun updateNextTrigger(id: Long, nextTriggerAt: Long)
+
+    @Query("UPDATE reels SET categoryId = :newCategoryId WHERE categoryId = :oldCategoryId")
+    suspend fun reassignCategory(oldCategoryId: Long, newCategoryId: Long)
 }
