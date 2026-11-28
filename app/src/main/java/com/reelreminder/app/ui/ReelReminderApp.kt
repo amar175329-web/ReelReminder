@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -38,9 +39,17 @@ import com.reelreminder.app.notifications.NotificationHelper
 import com.reelreminder.app.ui.components.AppTab
 import com.reelreminder.app.ui.components.FloatingGlassNav
 import com.reelreminder.app.ui.home.TodayView
+import com.reelreminder.app.ui.player.PlayerScreen
 import com.reelreminder.app.ui.schedule.AddReelSheet
 import com.reelreminder.app.ui.schedule.ScheduleViewModel
+import com.reelreminder.app.ui.settings.SettingsDialog
 import com.reelreminder.app.ui.vault.VaultView
+import com.reelreminder.app.util.AndroidReelLaunchDelegate
+import com.reelreminder.app.util.DebugPrefs
+import com.reelreminder.app.util.OpenMethod
+import com.reelreminder.app.util.OpenResult
+import com.reelreminder.app.util.ReelOpener
+import kotlinx.coroutines.launch
 
 @Composable
 fun ReelReminderApp(
@@ -130,15 +139,45 @@ fun ReelReminderApp(
         scheduleViewModel.consumeSaved()
     }
 
+    val coroutineScope = rememberCoroutineScope()
+    var showSettings by rememberSaveable { mutableStateOf(false) }
+    var selectedOpenMethod by remember { mutableStateOf(DebugPrefs.getOpenMethod(context)) }
+    var activePlayerReelId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var activePlayerReel by remember { mutableStateOf<Reel?>(null) }
+
+    LaunchedEffect(activePlayerReelId) {
+        activePlayerReel = activePlayerReelId?.let { app.repository.get(it) }
+    }
+
+    val reelOpener = remember(app, context) {
+        ReelOpener(
+            loadReelById = { id -> app.repository.get(id) },
+            getOpenMethod = { DebugPrefs.getOpenMethod(context) },
+            launcher = AndroidReelLaunchDelegate(
+                context = context,
+                onOpenInAppPlayer = { reelId -> activePlayerReelId = reelId }
+            )
+        )
+    }
+
     val onPlayReel: (Reel) -> Unit = { reel ->
-        runCatching {
-            val intent = NotificationHelper.createOpenReelIntent(context, reel.url)
-            context.startActivity(intent)
+        coroutineScope.launch {
+            when (reelOpener.open(reel.id)) {
+                is OpenResult.MissingLink -> {
+                    snackbarHostState.showSnackbar("Not saved: this reel has no link")
+                }
+                is OpenResult.LaunchFailed -> {
+                    snackbarHostState.showSnackbar("Could not open reel")
+                }
+                else -> Unit
+            }
         }
     }
 
-    BackHandler(enabled = selectedCategory != null || showSheet) {
+    BackHandler(enabled = activePlayerReelId != null || showSettings || selectedCategory != null || showSheet) {
         when {
+            showSettings -> showSettings = false
+            activePlayerReelId != null -> activePlayerReelId = null
             showSheet -> showSheet = false
             selectedCategory != null -> viewModel.selectCategory(null)
         }
@@ -178,7 +217,8 @@ fun ReelReminderApp(
                     exactAlarmsEnabled = exactAlarmsEnabled,
                     notificationsEnabled = notificationsEnabled,
                     onRequestExactAlarms = onRequestExactAlarms,
-                    onOpenNotificationSettings = onRequestNotificationSettings
+                    onOpenNotificationSettings = onRequestNotificationSettings,
+                    onOpenSettings = { showSettings = true }
                 )
             }
 
@@ -221,6 +261,35 @@ fun ReelReminderApp(
             hostState = snackbarHostState,
             modifier = Modifier
                 .align(Alignment.TopCenter)
+        )
+
+        if (activePlayerReelId != null) {
+            val playerId = activePlayerReelId!!
+            PlayerScreen(
+                reel = activePlayerReel,
+                onBack = { activePlayerReelId = null },
+                onOpenInInstagram = {
+                    coroutineScope.launch {
+                        reelOpener.open(playerId, overrideMethod = OpenMethod.M2_INSTAGRAM_HTTPS)
+                    }
+                },
+                onOpenInBrowser = {
+                    coroutineScope.launch {
+                        reelOpener.open(playerId, overrideMethod = OpenMethod.M3_BROWSER)
+                    }
+                }
+            )
+        }
+    }
+
+    if (showSettings) {
+        SettingsDialog(
+            selectedMethod = selectedOpenMethod,
+            onSelectMethod = { method ->
+                selectedOpenMethod = method
+                DebugPrefs.setOpenMethod(context, method)
+            },
+            onDismiss = { showSettings = false }
         )
     }
 

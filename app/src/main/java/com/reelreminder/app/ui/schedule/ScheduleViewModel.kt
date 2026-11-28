@@ -12,6 +12,7 @@ import com.reelreminder.app.data.ReelRepository
 import com.reelreminder.app.data.ScheduleType
 import com.reelreminder.app.data.daySet
 import com.reelreminder.app.util.NextTriggerCalculator
+import com.reelreminder.app.util.ShortcodeParser
 import com.reelreminder.app.util.TimeUtils
 import com.reelreminder.app.util.UrlExtractor
 import java.time.Instant
@@ -173,9 +174,10 @@ class ScheduleViewModel(
         if (current.loading || current.isSaving) return
 
         val trimmedUrl = current.url.trim()
+        val parsedReel = ShortcodeParser.parse(trimmedUrl)
         val urlError = when {
             trimmedUrl.isEmpty() -> UrlError.EMPTY
-            !UrlExtractor.isValidInstagramUrl(trimmedUrl) -> UrlError.INVALID
+            parsedReel == null -> UrlError.INVALID
             else -> null
         }
 
@@ -242,9 +244,10 @@ class ScheduleViewModel(
 
         saveJob = viewModelScope.launch {
             try {
+                val canonicalUrl = parsedReel?.canonicalUrl ?: trimmedUrl
                 val reel = Reel(
                     id = current.reelId ?: 0L,
-                    url = trimmedUrl,
+                    url = canonicalUrl,
                     note = current.note.trim(),
                     categoryId = current.categoryId,
                     scheduleType = current.type,

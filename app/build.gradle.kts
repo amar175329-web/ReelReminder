@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.reelreminder.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.reelreminder.app"

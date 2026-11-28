@@ -81,4 +81,27 @@
     <string name="cd_warning">चेतावनी</string>
     <string name="cd_empty">कोई रिमाइंडर नहीं</string>
     <string name="cd_status">स्थिति</string>
+
+    <string name="category_label">कैटेगरी</string>
+    <string name="when_label">कब</string>
+    <string name="tab_today">आज</string>
+    <string name="tab_vault">वॉल्ट</string>
+    <string name="greeting_morning">सुप्रभात</string>
+    <string name="greeting_afternoon">नमस्ते</string>
+    <string name="greeting_evening">शुभ संध्या</string>
+    <string name="today_subtitle">आज के लिए सेव की गई रील्स।</string>
+    <string name="todays_plan">आज का प्लान</string>
+    <string name="watched_count">%2$d में से %1$d देखी गईं</string>
+    <string name="vault_subtitle">आपकी रील्स, ज़रूरत के हिसाब से।</string>
+    <string name="new_collection">+ नया कलेक्शन</string>
+    <string name="collection_name_hint">नाम लिखें, फिर सेव करें</string>
+    <string name="vault_back">‹ वॉल्ट</string>
+    <string name="collection_stats">%1$d %2$s · आज %3$d देखी गईं</string>
+    <string name="collection_empty_title">अभी कुछ नहीं है</string>
+    <string name="collection_empty_body">Instagram से रील शेयर करें और %1$s चुनें।</string>
+    <string name="clipboard_banner_title">कॉपी की गई रील सेव करें?</string>
+    <string name="clipboard_save">सेव करें</string>
+    <string name="in_app_tip">सुझाव: Instagram में Share → “Share to…” दबाकर ReelReminder चुनें</string>
+    <string name="shortcut_share_label">रील सेव करें</string>
+    <string name="shortcut_share_long_label">ReelReminder में रील सेव करें</string>
 </resources>
