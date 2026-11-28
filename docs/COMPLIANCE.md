@@ -1,0 +1,4 @@
+# COMPLIANCE (Section 54). Engineering guidance, not legal advice.
+Domain flags: social-platform APIs (Instagram links/embeds): YES. Scraping: NO (forbidden here). Children under 18: not targeted (owner to confirm age rating: OPEN). UGC, payments, finance, health, AI media: NO.
+Obligations to verify from OFFICIAL sources (record URL + date in docs/FRESHNESS_CHECK.md; until then UNKNOWN): (1) Meta/Instagram platform terms for embedding public reels; (2) Instagram oEmbed requirements (only if the later proxy is built); (3) Google Play target API level (API 36 per brief, verify) if ever published there; (4) India DPDP: data kept is on-device only, minimal; verify obligations and dates (brief says main duties 13 May 2027: verify).
+Data inventory: reel links + notes + chosen cover images + watch log, on the phone only, never sent anywhere; deleted by "Delete all my data". Privacy policy page must say exactly this.

@@ -1,14 +1,21 @@
 # STATUS
 
-## ReelReminder v3 Implementation Status
-- **Bug Fix 1 (Instagram Share Target & Clipboard Fallback):** REAL. Added `shortcuts.xml` share target, `publishSharingShortcut()` via `ShortcutManagerCompat`, and onResume clipboard check for copied Instagram reel URLs.
-- **Bug Fix 2 (PendingIntent Isolation):** REAL. Isolated PendingIntent per reel using distinct `requestCode = reel.id.toInt()`, `intent.data = Uri.parse(url)`, Room lookup by ID at trigger time, and explicit intent targeting `com.instagram.android` with browser fallback.
-- **Bug Fix 3 (Strict Instagram URL Extractor):** REAL. Enforced HTTPS host `instagram.com` / `www.instagram.com` with paths `/reel/`, `/reels/`, `/p/`, `/tv/` and preserved `?igsh=` tracking params. 100% unit tests passing (`./gradlew testDebugUnitTest`).
-- **Feature (Collections / Categories):** REAL. Added `Category` entity, `CategoryDao`, Room database migration 1 to 2, and default categories (Morning, Motivation, Evening, Study) with cool gradient pairs.
-- **Design v3 (White Glass UI):** REAL. Implemented Plus Jakarta Sans typography, white glass containers (`GlassModifiers.kt`), poster carousel (`TodayView.kt`), 3-poster fan collections (`VaultView.kt`), floating glass navigation bar (`FloatingNav.kt`), and modal bottom sheet with live preview (`AddReelSheet.kt`).
-- **Adaptive Icon & Branding:** REAL. Generated adaptive launcher icon with `#04201F` background and artwork foreground from `logo_original.png`; in-app 42dp header logo from `logo.png`.
-- **Debug APK Build:** REAL. Executed `./gradlew assembleDebug` successfully. Output: `app-debug.apk` (18,403,593 bytes).
-- **GitHub Repository & Commits:** REAL. Pushed to `https://github.com/amar175329-web/ReelReminder` (`main` branch).
-- **GitHub Release & Download Asset:** REAL. Created release `v3.0.0` with attached debug APK. Public download URL: `https://github.com/amar175329-web/ReelReminder/releases/download/v3.0.0/app-debug.apk` (verified HTTP 200, 18,403,593 bytes).
-- **Landing Site:** REAL. Prepared in `/site` with `prototype/index.html`, `logo.png`, sticky header banner, and "Download APK" button pointing to the GitHub Release.
-- **Vercel Deployment:** NOT RUN (Awaiting user Vercel authentication via `vercel login`).
+## Step 0: Existing Project Protection (2026-11-28) — REAL
+- **GitHub auth & repo:** REAL (`gh auth status`: logged in as `amar175329-web`, scopes `gist, read:org, repo`; repo `amar175329-web/ReelReminder`, public).
+- **Known-good rollback point:** Tag `pre-v6` created at commit `21e3e81` on `main`. Active work branch: `v6/work`.
+- **Working tree before Step 0:** Clean on `main` (`21e3e81`).
+- **Build config inspected:** AGP `8.7.3`, Kotlin `2.0.21`, Compose BOM `2024.10.01`, Room `2.6.1`, KSP `2.0.21-1.0.28`, `compileSdk = 35`, `minSdk = 26`, `targetSdk = 36`, `versionCode = 1`, `versionName = "3.0"`, ARM64/host AAPT2 override `../tools/aapt2/aapt2`.
+- **Existing tests inspected:** `UrlExtractorTest.kt`, `NextTriggerCalculatorTest.kt` (unit tests); `androidTest` = none yet.
+- **Signing config:** Debug-signed only (no `.jks`/`.keystore` in repo; ADR-7). Release keystore not yet created.
+- **Current Vercel project:** NOT LINKED (no `.vercel/` directory; `vercel login` required before deploy).
+- **Existing GitHub Release:** `v3.0.0` ("ReelReminder v3.0.0") with `app-debug.apk`.
+- **Tools verified:** `gitleaks` `8.30.1` installed at `/root/.local/bin/gitleaks`.
+- **Preserved:** All existing `main` history, `v3.0.0` release, Room schema v2 (`Reel`, `Category`), alarm scheduling, and existing tests.
+
+## Owner Device Observations (Previous Build)
+- **REAL (owner device test of previous build):** app installs, share-to-save works via "Share to...", reels list shows, notifications fire, design concept approved.
+- **REAL bugs:** Play and notification open a different reel; UI overlaps status bar; theme too dark; blank date field; picker dark; back shows white screen; custom repeat odd; no thumbnails; no edit/delete/cancel; streak chip inactive; logo too dark.
+- **NOT RUN:** Issues 1 to 24 in `docs/ISSUES.md` (not yet implemented/tested for v6).
+
+## Next Step
+- Confirm Step 0 + Issue 1 plan, then implement Issue 1 (exact reel opening via `ReelOpener`, `ShortcodeParser`, `MediaIdCodec`, `PlayerScreen`, and Debug open-method selector).
