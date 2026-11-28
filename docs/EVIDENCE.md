@@ -13,3 +13,10 @@
 - **Environment:** Linux local build host, AGP 8.7.3, Kotlin 2.0.21, `compileSdk = 36` (with `android.suppressUnsupportedCompileSdk=36` in `gradle.properties`), `targetSdk = 36`, `minSdk = 26`, local debug keystore `/root/.android/debug.keystore`.
 - **Output summary:** `BUILD SUCCESSFUL in 1m 23s`. `lintDebug` passed with 0 errors (fixed 22 pre-existing `MissingTranslation` entries in `values-hi/strings.xml`). `testDebugUnitTest` passed 100% (`ShortcodeParserTest`, `MediaIdCodecTest`, `ReelOpenerTest`, `UrlExtractorTest`, `NextTriggerCalculatorTest`). `assembleDebug` succeeded locally.
 - **Label:** REAL (code, lint, unit tests, local debug build) | NOT RUN (device checks A3, A4 in `docs/DEVICE_CHECKLIST.md` — pending Milestone A gate)
+
+## Issue 2 — Notification Tap Opens Exact Reel (PlayerActivity + Isolated PendingIntent)
+- **Command:** `cd /root/work/reelreminder && ./gradlew lintDebug testDebugUnitTest assembleDebug`
+- **Date:** 2026-11-28
+- **Environment:** Linux local build host, AGP 8.7.3, `compileSdk = 36`, `targetSdk = 36`, local `/root/.android/debug.keystore`.
+- **Output summary:** `BUILD SUCCESSFUL in 4m 2s`. `lintDebug` passed with 0 errors. `testDebugUnitTest` passed 100% including `NotificationIntentSpecTest` (proving 3 reels generate distinct `requestCode` and `reelreminder://reel/<id>` data URIs). `assembleDebug` succeeded locally. `NotificationPendingIntentTest` (`androidTest`) written; execution `NOT RUN` (no emulator/device attached).
+- **Label:** REAL (code, lint, unit tests, local debug build) | NOT RUN (instrumented `NotificationPendingIntentTest` and device check A5 — pending Milestone A gate)

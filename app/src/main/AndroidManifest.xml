@@ -52,6 +52,10 @@
                 android:resource="@xml/shortcuts" />
         </activity>
 
+        <activity
+            android:name=".PlayerActivity"
+            android:exported="false" />
+
         <receiver
             android:name=".alarm.AlarmReceiver"
             android:exported="false" />

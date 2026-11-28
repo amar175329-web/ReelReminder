@@ -13,13 +13,28 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.reelreminder.app.PlayerActivity
 import com.reelreminder.app.R
 import com.reelreminder.app.alarm.NotificationActionReceiver
 import com.reelreminder.app.data.Reel
 import com.reelreminder.app.util.UrlExtractor
 
+data class NotificationIntentSpec(
+    val reelId: Long,
+    val requestCode: Int,
+    val dataUri: String
+)
+
 object NotificationHelper {
     const val CHANNEL_ID = "reel_reminders"
+
+    fun buildPlayerIntentSpec(reelId: Long): NotificationIntentSpec {
+        return NotificationIntentSpec(
+            reelId = reelId,
+            requestCode = reelId.toInt(),
+            dataUri = "reelreminder://reel/$reelId"
+        )
+    }
 
     fun createChannel(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
@@ -110,17 +125,15 @@ object NotificationHelper {
                 actionPendingIntent(context, reel.id, NotificationActionReceiver.ACTION_DONE)
             )
 
-        if (UrlExtractor.isValidHttpUrl(reel.url)) {
-            val openIntent = createOpenReelIntent(context, reel.url)
-            // Fix 2: requestCode = reminder id, intent.data = Uri.parse(url), FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE
-            val contentIntent = PendingIntent.getActivity(
-                context,
-                reel.id.toInt(),
-                openIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            builder.setContentIntent(contentIntent)
-        }
+        val spec = buildPlayerIntentSpec(reel.id)
+        val playerIntent = PlayerActivity.createIntent(context, reel.id)
+        val contentIntent = PendingIntent.getActivity(
+            context,
+            spec.requestCode,
+            playerIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        builder.setContentIntent(contentIntent)
 
         manager.notify(notificationId(reel.id), builder.build())
     }
