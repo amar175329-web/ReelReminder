@@ -130,6 +130,24 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Issue 3 Debug helper: inserts a reel with an empty URL so the owner can verify
+     * "Not saved: this reel has no link" on a physical device.
+     */
+    fun createDebugReelWithoutLink() {
+        viewModelScope.launch {
+            val nextTrigger = Instant.now().plusSeconds(3600).toEpochMilli()
+            repository.insert(
+                Reel(
+                    url = "",
+                    note = "Debug reel (no link)",
+                    categoryId = 1L,
+                    nextTriggerAt = nextTrigger
+                )
+            )
+        }
+    }
+
     fun addCategory(name: String) {
         viewModelScope.launch {
             val existing = repository.getAllCategories()

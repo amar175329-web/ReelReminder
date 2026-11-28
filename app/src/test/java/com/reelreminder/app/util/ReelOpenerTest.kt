@@ -94,4 +94,31 @@ class ReelOpenerTest {
         assertTrue(result is OpenResult.Opened)
         assertEquals("https://www.instagram.com/reel/EmbedCode9/embed/", calls[0].uri)
     }
+
+    @Test
+    fun missingOrInvalidLinkReturnsMissingLinkWithZeroLauncherCalls() = runBlocking {
+        val reels = mapOf(
+            10L to Reel(id = 10L, url = "", note = "Empty link"),
+            11L to Reel(id = 11L, url = "   ", note = "Blank link"),
+            12L to Reel(id = 12L, url = "https://www.instagram.com/explore/", note = "No shortcode")
+        )
+        val calls = mutableListOf<LaunchCall>()
+
+        val opener = ReelOpener(
+            loadReelById = { id -> reels[id] },
+            getOpenMethod = { OpenMethod.M2_INSTAGRAM_HTTPS },
+            launcher = object : ReelLaunchDelegate {
+                override fun launch(method: OpenMethod, reelId: Long, shortcode: String, uri: String): Boolean {
+                    calls.add(LaunchCall(method, reelId, shortcode, uri))
+                    return true
+                }
+            },
+            logger = {}
+        )
+
+        assertTrue(opener.open(10L) is OpenResult.MissingLink)
+        assertTrue(opener.open(11L) is OpenResult.MissingLink)
+        assertTrue(opener.open(12L) is OpenResult.MissingLink)
+        assertEquals(0, calls.size)
+    }
 }

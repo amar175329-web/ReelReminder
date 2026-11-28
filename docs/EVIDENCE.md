@@ -20,3 +20,10 @@
 - **Environment:** Linux local build host, AGP 8.7.3, `compileSdk = 36`, `targetSdk = 36`, local `/root/.android/debug.keystore`.
 - **Output summary:** `BUILD SUCCESSFUL in 4m 2s`. `lintDebug` passed with 0 errors. `testDebugUnitTest` passed 100% including `NotificationIntentSpecTest` (proving 3 reels generate distinct `requestCode` and `reelreminder://reel/<id>` data URIs). `assembleDebug` succeeded locally. `NotificationPendingIntentTest` (`androidTest`) written; execution `NOT RUN` (no emulator/device attached).
 - **Label:** REAL (code, lint, unit tests, local debug build) | NOT RUN (instrumented `NotificationPendingIntentTest` and device check A5 — pending Milestone A gate)
+
+## Issue 3 — Missing Link Guard ("Not saved: this reel has no link") + Debug Helper
+- **Command:** `cd /root/work/reelreminder && ./gradlew lintDebug testDebugUnitTest assembleDebug`
+- **Date:** 2026-11-28
+- **Environment:** Linux local build host, AGP 8.7.3, `compileSdk = 36`, `targetSdk = 36`, local `/root/.android/debug.keystore`.
+- **Output summary:** `BUILD SUCCESSFUL in 2m 13s`. `lintDebug` 0 errors. `testDebugUnitTest` passed 100% including `ReelOpenerTest.missingOrInvalidLinkReturnsMissingLinkWithZeroLauncherCalls` (0 launcher calls for empty/blank/non-shortcode URLs). Added Settings > Debug > "Create reel without link" helper.
+- **Label:** REAL (code, lint, unit tests, local debug build) | NOT RUN (device check A6 — pending Milestone A gate)

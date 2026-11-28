@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -25,6 +27,7 @@ import com.reelreminder.app.util.OpenMethod
 fun SettingsDialog(
     selectedMethod: OpenMethod,
     onSelectMethod: (OpenMethod) -> Unit,
+    onCreateReelWithoutLink: () -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
@@ -73,6 +76,14 @@ fun SettingsDialog(
                     }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedButton(
+                    onClick = onCreateReelWithoutLink,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Create reel without link")
+                }
             }
         },
         confirmButton = {

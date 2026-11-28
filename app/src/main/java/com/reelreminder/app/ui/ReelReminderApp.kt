@@ -289,6 +289,13 @@ fun ReelReminderApp(
                 selectedOpenMethod = method
                 DebugPrefs.setOpenMethod(context, method)
             },
+            onCreateReelWithoutLink = {
+                viewModel.createDebugReelWithoutLink()
+                showSettings = false
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar("Created debug reel without link")
+                }
+            },
             onDismiss = { showSettings = false }
         )
     }
