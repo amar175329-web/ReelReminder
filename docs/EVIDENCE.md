@@ -41,3 +41,19 @@
 - **Environment:** Local build host with original `/root/.android/debug.keystore` (same signing key as `v3.0.0`).
 - **Output summary:** `app-debug.apk` = `18973084` bytes, SHA-256 = `f730e89a12491f5fbd6d713ef3b239ce60511e34431d065103efafa3cfd2a10e`.
 - **Label:** REAL
+
+## Milestones B–D (Issues 5–24) — Full v6.0 Build, Lint, Unit Tests & Secret Scan
+- **Commands:**
+  1. `cd /root/work/reelreminder && gitleaks git -v && gitleaks dir -v .`
+  2. `cd /root/work/reelreminder && ./gradlew lintDebug testDebugUnitTest assembleDebug`
+  3. `sha256sum app/build/outputs/apk/debug/app-debug.apk && stat -c "bytes=%s" app/build/outputs/apk/debug/app-debug.apk`
+- **Date:** 2026-11-28
+- **Environment:** Linux local build host (same machine & `/root/.android/debug.keystore` as `v3.0.0`), JDK 17, AGP 8.7.3, `compileSdk = 36`, `targetSdk = 36`, `versionCode = 2`, `versionName = "6.0"`.
+- **Output summary:**
+  - `gitleaks git -v`: 11 commits scanned, 0 leaks found.
+  - `gitleaks dir -v .`: 13.66 MB scanned, 0 leaks found.
+  - `./gradlew lintDebug testDebugUnitTest assembleDebug`: `BUILD SUCCESSFUL in 7m 15s`. `lintDebug` 0 errors; all unit tests passed (`ShortcodeParserTest`, `MediaIdCodecTest`, `ReelOpenerTest`, `NotificationIntentSpecTest`, `ShareCaptureParserTest`, `NextTriggerCalculatorTest`, `StreakCalculatorTest`, `TodayGroupingTest`, `UrlExtractorTest`); `assembleDebug` produced `app-debug.apk` (`18320688` bytes, SHA-256 `513ce5d41219b84cb76e7addbbc3f3cbe5ea60042f34051c04ae3e2a113e10ab`).
+  - `adb devices -l`: 0 physical devices / emulators connected (`NOT RUN` for device checks A1–D3).
+  - Vercel deploy: `NOT RUN` (requires interactive `vercel login`).
+  - GitHub Actions CI workflow push: `NOT RUN` (`gh` token lacks `workflow` OAuth scope; local build + release used per owner instruction).
+- **Label:** REAL (code, lint, unit tests, gitleaks, local v6.0 APK build) | NOT RUN (physical device tests A1–D3, Vercel deploy, Lighthouse, CI workflow)

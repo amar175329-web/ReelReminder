@@ -4,15 +4,26 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-/**
- * The three supported repeat modes.
- *
- * Stored as its name through [Converters] so the database stays readable.
- */
 enum class ScheduleType {
     ONCE,
     DAILY,
-    WEEKLY
+    WEEKLY,
+    MONTHLY,
+    YEARLY,
+    CUSTOM
+}
+
+enum class RepeatUnit(val label: String, val singular: String) {
+    DAYS("Days", "day"),
+    WEEKS("Weeks", "week"),
+    MONTHS("Months", "month"),
+    YEARS("Years", "year")
+}
+
+enum class EndType(val label: String) {
+    NEVER("Never"),
+    ON_DATE("On date"),
+    AFTER_COUNT("After N times")
 }
 
 @Entity(
@@ -35,7 +46,16 @@ data class Reel(
     val done: Boolean = false,
     /** Paused reminders keep their data but have no alarm scheduled. */
     val paused: Boolean = false,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val repeatInterval: Int = 1,
+    val repeatUnit: RepeatUnit = RepeatUnit.DAYS,
+    val endType: EndType = EndType.NEVER,
+    /** ISO-8601 local date (yyyy-MM-dd) when endType == ON_DATE. */
+    val endDateIso: String? = null,
+    val endAfterCount: Int? = null,
+    val firedCount: Int = 0,
+    /** Optional app-internal file path for owner-picked cover image (Issue 12). */
+    val coverUri: String? = null
 )
 
 fun Reel.daySet(): Set<Int> =

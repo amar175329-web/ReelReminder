@@ -13,13 +13,21 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
+import androidx.core.view.WindowCompat
 import com.reelreminder.app.ui.AppViewModel
 import com.reelreminder.app.ui.ReelReminderApp
+import com.reelreminder.app.ui.theme.LocalAppDarkTheme
 import com.reelreminder.app.ui.theme.ReelReminderTheme
+import com.reelreminder.app.util.DebugPrefs
 import com.reelreminder.app.util.ShareCaptureParser
 import com.reelreminder.app.util.ShareDiagnosticsStore
 
@@ -37,9 +45,21 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ReelReminderTheme {
+            var themeMode by remember { mutableStateOf(DebugPrefs.getThemeMode(this)) }
+            ReelReminderTheme(themeMode = themeMode) {
+                val isDark = LocalAppDarkTheme.current
+                SideEffect {
+                    val controller = WindowCompat.getInsetsController(window, window.decorView)
+                    controller.isAppearanceLightStatusBars = !isDark
+                    controller.isAppearanceLightNavigationBars = !isDark
+                }
                 ReelReminderApp(
                     viewModel = viewModel,
+                    themeMode = themeMode,
+                    onThemeModeChange = { mode ->
+                        themeMode = mode
+                        DebugPrefs.setThemeMode(this, mode)
+                    },
                     onRequestNotificationSettings = ::openNotificationSettings,
                     onRequestExactAlarms = ::openExactAlarmSettings
                 )

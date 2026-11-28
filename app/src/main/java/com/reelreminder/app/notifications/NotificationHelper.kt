@@ -103,7 +103,7 @@ object NotificationHelper {
         }
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification)
+            .setSmallIcon(R.drawable.ic_stat_reel)
             .setContentTitle(title)
             .setContentText(reel.url)
             .setStyle(NotificationCompat.BigTextStyle().bigText(reel.url))

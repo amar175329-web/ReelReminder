@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.util.Log
 import com.reelreminder.app.data.Reel
+import com.reelreminder.app.ui.theme.ThemeMode
 
 enum class OpenMethod(val label: String, val description: String) {
     M1_DEEP_LINK(
@@ -109,6 +110,7 @@ class ReelOpener(
 object DebugPrefs {
     private const val PREFS_NAME = "reelreminder_debug"
     private const val KEY_OPEN_METHOD = "open_method"
+    private const val KEY_THEME_MODE = "theme_mode"
 
     fun getOpenMethod(context: Context): OpenMethod {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -120,6 +122,19 @@ object DebugPrefs {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putString(KEY_OPEN_METHOD, method.name)
+            .apply()
+    }
+
+    fun getThemeMode(context: Context): ThemeMode {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val saved = prefs.getString(KEY_THEME_MODE, ThemeMode.LIGHT.name)
+        return ThemeMode.entries.firstOrNull { it.name == saved } ?: ThemeMode.LIGHT
+    }
+
+    fun setThemeMode(context: Context, mode: ThemeMode) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_THEME_MODE, mode.name)
             .apply()
     }
 }

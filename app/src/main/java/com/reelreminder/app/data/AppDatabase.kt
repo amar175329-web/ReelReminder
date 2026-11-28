@@ -12,14 +12,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [Reel::class, Category::class],
-    version = 2,
+    entities = [Reel::class, Category::class, WatchLog::class],
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun reelDao(): ReelDao
     abstract fun categoryDao(): CategoryDao
+    abstract fun watchLogDao(): WatchLogDao
 
     companion object {
         @Volatile
@@ -48,6 +49,29 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `reels` ADD COLUMN `repeatInterval` INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE `reels` ADD COLUMN `repeatUnit` TEXT NOT NULL DEFAULT 'DAYS'")
+                db.execSQL("ALTER TABLE `reels` ADD COLUMN `endType` TEXT NOT NULL DEFAULT 'NEVER'")
+                db.execSQL("ALTER TABLE `reels` ADD COLUMN `endDateIso` TEXT")
+                db.execSQL("ALTER TABLE `reels` ADD COLUMN `endAfterCount` INTEGER")
+                db.execSQL("ALTER TABLE `reels` ADD COLUMN `firedCount` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `reels` ADD COLUMN `coverUri` TEXT")
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `watch_logs` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `reelId` INTEGER NOT NULL,
+                        `watchedAt` INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_watch_logs_reelId` ON `watch_logs` (`reelId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_watch_logs_watchedAt` ON `watch_logs` (`watchedAt`)")
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -55,24 +79,24 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "reelreminder.db"
                 )
-                .addMigrations(MIGRATION_1_2)
-                .fallbackToDestructiveMigration()
-                .addCallback(object : RoomDatabase.Callback() {
-                    override fun onCreate(db: SupportSQLiteDatabase) {
-                        super.onCreate(db)
-                        CoroutineScope(Dispatchers.IO).launch {
-                            getInstance(context).categoryDao().insertAll(Category.DEFAULT_CATEGORIES)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addCallback(object : RoomDatabase.Callback() {
+                        override fun onCreate(db: SupportSQLiteDatabase) {
+                            super.onCreate(db)
+                            CoroutineScope(Dispatchers.IO).launch {
+                                getInstance(context).categoryDao().insertAll(Category.DEFAULT_CATEGORIES)
+                            }
                         }
-                    }
-                    override fun onOpen(db: SupportSQLiteDatabase) {
-                        super.onOpen(db)
-                        CoroutineScope(Dispatchers.IO).launch {
-                            getInstance(context).categoryDao().insertAll(Category.DEFAULT_CATEGORIES)
+
+                        override fun onOpen(db: SupportSQLiteDatabase) {
+                            super.onOpen(db)
+                            CoroutineScope(Dispatchers.IO).launch {
+                                getInstance(context).categoryDao().insertAll(Category.DEFAULT_CATEGORIES)
+                            }
                         }
-                    }
-                })
-                .build()
-                .also { instance = it }
+                    })
+                    .build()
+                    .also { instance = it }
             }
     }
 }

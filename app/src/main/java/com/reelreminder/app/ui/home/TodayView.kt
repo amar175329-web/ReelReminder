@@ -16,8 +16,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -60,6 +62,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import com.reelreminder.app.R
 import com.reelreminder.app.data.Category
 import com.reelreminder.app.data.Reel
@@ -69,6 +73,9 @@ import com.reelreminder.app.ui.components.ReelPoster
 import com.reelreminder.app.ui.components.formatPosterRepeat
 import com.reelreminder.app.ui.components.formatPosterTime
 import com.reelreminder.app.ui.components.glass
+import com.reelreminder.app.util.StreakStats
+import com.reelreminder.app.util.TodayGrouping
+import java.io.File
 import com.reelreminder.app.ui.theme.AquaBlob
 import com.reelreminder.app.ui.theme.AquaGlow
 import com.reelreminder.app.ui.theme.DarkChip
@@ -77,6 +84,7 @@ import com.reelreminder.app.ui.theme.DarkMute
 import com.reelreminder.app.ui.theme.LightChip
 import com.reelreminder.app.ui.theme.LightInk
 import com.reelreminder.app.ui.theme.LightMute
+import com.reelreminder.app.ui.theme.LocalAppDarkTheme
 import com.reelreminder.app.ui.theme.SkyBlob
 import com.reelreminder.app.ui.theme.TealDark
 import com.reelreminder.app.ui.theme.TealPrimary
@@ -87,13 +95,17 @@ import java.util.Calendar
 fun TodayView(
     reels: List<Reel>,
     categories: List<Category>,
+    streakStats: StreakStats,
     clipboardUrl: String?,
     onDismissClipboard: () -> Unit,
     onSaveClipboard: (String) -> Unit,
     onPlayReel: (Reel) -> Unit,
     onToggleDone: (Reel) -> Unit,
+    onTogglePause: (Reel) -> Unit,
+    onDeleteReel: (Reel) -> Unit,
     onEditReel: (Reel) -> Unit,
     onOpenAdd: () -> Unit,
+    onOpenStats: () -> Unit,
     exactAlarmsEnabled: Boolean,
     notificationsEnabled: Boolean,
     onRequestExactAlarms: () -> Unit,
@@ -101,19 +113,19 @@ fun TodayView(
     onOpenSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val isDark = isSystemInDarkTheme()
+    val isDark = LocalAppDarkTheme.current
     val inkColor = if (isDark) DarkInk else LightInk
     val muteColor = if (isDark) DarkMute else LightMute
     val chipColor = if (isDark) DarkChip else LightChip
 
     val categoryMap = remember(categories) { categories.associateBy { it.id } }
 
-    val pendingReels = remember(reels) {
-        reels.filter { !it.done && !it.paused }
-            .sortedBy { it.nextTriggerAt }
-    }
-    val watchedCount = remember(reels) { reels.count { it.done } }
-    val totalCount = reels.size
+    val sections = remember(reels) { TodayGrouping.group(reels) }
+    val pendingReels = sections.carousel
+    val todaysPlan = sections.todaysPlan
+    val comingUp = sections.comingUp
+    val watchedCount = remember(todaysPlan) { todaysPlan.count { it.done } }
+    val totalCount = todaysPlan.size
 
     val hour = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
     val greeting = when {
@@ -126,14 +138,13 @@ fun TodayView(
     val carouselPosterWidth = screenWidth * 0.78f
 
     Box(modifier = modifier.fillMaxSize()) {
-        // Soft blurred background blobs from prototype
-        CanvasBlobs(modifier = Modifier.fillMaxSize())
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 120.dp)
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .padding(top = 8.dp, bottom = 160.dp)
         ) {
             // Header Bar
             Row(
@@ -163,11 +174,12 @@ fun TodayView(
                     modifier = Modifier.weight(1f)
                 )
 
-                // Streak Chip
+                // Streak Chip (Issue 15: real streak, 0 on new install, opens Stats sheet)
                 Box(
                     modifier = Modifier
                         .clip(CircleShape)
                         .background(chipColor)
+                        .clickable(onClick = onOpenStats)
                         .padding(horizontal = 12.dp, vertical = 7.dp)
                 ) {
                     Row(
@@ -176,12 +188,12 @@ fun TodayView(
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.LocalFireDepartment,
-                            contentDescription = null,
+                            contentDescription = "Open stats",
                             tint = TealPrimary,
                             modifier = Modifier.size(15.dp)
                         )
                         Text(
-                            text = "${maxOf(watchedCount, 1)} days",
+                            text = "${streakStats.currentStreakDays} ${if (streakStats.currentStreakDays == 1) "day" else "days"}",
                             color = inkColor,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold
@@ -289,6 +301,9 @@ fun TodayView(
                             playButtonSize = 58.dp,
                             showCountdown = index == 0,
                             onPlay = { onPlayReel(reel) },
+                            onToggleDone = { onToggleDone(reel) },
+                            onTogglePause = { onTogglePause(reel) },
+                            onDelete = { onDeleteReel(reel) },
                             onClick = { onEditReel(reel) }
                         )
                     }
@@ -349,7 +364,7 @@ fun TodayView(
                         )
                     }
 
-                    if (reels.isEmpty()) {
+                    if (todaysPlan.isEmpty()) {
                         // Empty state inside card
                         Column(
                             modifier = Modifier
@@ -390,8 +405,8 @@ fun TodayView(
                             }
                         }
                     } else {
-                        // Vertical timeline
-                        reels.forEach { reel ->
+                        // Vertical timeline (Today's plan)
+                        todaysPlan.forEach { reel ->
                             val cat = categoryMap[reel.categoryId]
                             val catColors = remember(cat) {
                                 if (cat != null) parseColorPair(cat.gradientStart, cat.gradientEnd)
@@ -406,6 +421,104 @@ fun TodayView(
                                 onPlay = { onPlayReel(reel) },
                                 onEdit = { onEditReel(reel) }
                             )
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // Issue 16: "Coming up" Glass Card (tomorrow or later, today excluded)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 18.dp)
+                    .glass(shape = RoundedCornerShape(30.dp), isDark = isDark)
+                    .padding(20.dp)
+            ) {
+                Column {
+                    Text(
+                        text = "Coming up",
+                        color = inkColor,
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-0.02).sp
+                    )
+                    Text(
+                        text = "Reels scheduled for tomorrow and later, nearest first.",
+                        color = muteColor,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    if (comingUp.isEmpty()) {
+                        Text(
+                            text = "Nothing scheduled after today.",
+                            color = muteColor,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            comingUp.forEach { reel ->
+                                val cat = categoryMap[reel.categoryId]
+                                val colors = if (cat != null) parseColorPair(cat.gradientStart, cat.gradientEnd) else listOf(TealPrimary, TealDark)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { onEditReel(reel) }
+                                        .padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp, 52.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(Brush.linearGradient(colors))
+                                    ) {
+                                        if (!reel.coverUri.isNullOrBlank()) {
+                                            AsyncImage(
+                                                model = File(reel.coverUri),
+                                                contentDescription = null,
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        }
+                                    }
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = reel.note.ifBlank { "Saved reel" },
+                                            color = inkColor,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = TodayGrouping.formatComingUpLabel(reel.nextTriggerAt),
+                                            color = muteColor,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .size(38.dp)
+                                            .clip(CircleShape)
+                                            .background(Brush.linearGradient(listOf(TealPrimary, TealDark)))
+                                            .clickable { onPlayReel(reel) },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.PlayArrow,
+                                            contentDescription = "Play reel",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }

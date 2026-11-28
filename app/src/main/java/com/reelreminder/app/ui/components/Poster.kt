@@ -21,14 +21,23 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+import java.io.File
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,6 +84,8 @@ fun ReelPoster(
     canDelete: Boolean = false,
     onPlay: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
+    onToggleDone: (() -> Unit)? = null,
+    onTogglePause: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null
 ) {
     val gradientColors = remember(category) {
@@ -102,38 +113,57 @@ fun ReelPoster(
             .border(1.dp, Color(0x59FFFFFF), shape)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
     ) {
-        // Background motifs: Sparkle + Glowing Ring from Logo
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val width = size.width
-            val height = size.height
-
-            // Sparkle 1 (four-pointed star)
-            val sp1X = width * 0.78f
-            val sp1Y = height * 0.34f
-            val sp1Size = 12.dp.toPx()
-            drawSparkle(sp1X, sp1Y, sp1Size, Color(0xCCFFFFFF))
-
-            // Sparkle 2 (smaller)
-            val sp2X = width * 0.16f
-            val sp2Y = height * 0.44f
-            val sp2Size = 7.dp.toPx()
-            drawSparkle(sp2X, sp2Y, sp2Size, Color(0x99FFFFFF))
-
-            // Glowing ring in bottom-right
-            val ringRadius = width * 0.38f
-            val ringCenter = Offset(width * 1.1f, height * 1.05f)
-            drawCircle(
-                color = Color(0x22FFFFFF),
-                radius = ringRadius,
-                center = ringCenter,
-                style = Stroke(width = 16.dp.toPx())
+        // Owner-picked cover image (Coil, local app storage) with gradient fallback
+        if (!reel.coverUri.isNullOrBlank()) {
+            AsyncImage(
+                model = File(reel.coverUri),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
             )
-            drawCircle(
-                color = Color(0x3367E8F9),
-                radius = ringRadius * 0.95f,
-                center = ringCenter,
-                style = Stroke(width = 6.dp.toPx())
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color(0x5504201F), Color(0x2204201F), Color(0xBB04201F))
+                        )
+                    )
             )
+        } else {
+            // Background motifs: Sparkle + Glowing Ring from Logo
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val width = size.width
+                val height = size.height
+
+                // Sparkle 1 (four-pointed star)
+                val sp1X = width * 0.78f
+                val sp1Y = height * 0.34f
+                val sp1Size = 12.dp.toPx()
+                drawSparkle(sp1X, sp1Y, sp1Size, Color(0xCCFFFFFF))
+
+                // Sparkle 2 (smaller)
+                val sp2X = width * 0.16f
+                val sp2Y = height * 0.44f
+                val sp2Size = 7.dp.toPx()
+                drawSparkle(sp2X, sp2Y, sp2Size, Color(0x99FFFFFF))
+
+                // Glowing ring in bottom-right
+                val ringRadius = width * 0.38f
+                val ringCenter = Offset(width * 1.1f, height * 1.05f)
+                drawCircle(
+                    color = Color(0x22FFFFFF),
+                    radius = ringRadius,
+                    center = ringCenter,
+                    style = Stroke(width = 16.dp.toPx())
+                )
+                drawCircle(
+                    color = Color(0x3367E8F9),
+                    radius = ringRadius * 0.95f,
+                    center = ringCenter,
+                    style = Stroke(width = 6.dp.toPx())
+                )
+            }
         }
 
         // Poster Content
@@ -157,21 +187,65 @@ fun ReelPoster(
 
                 GlassPill(text = formatPosterRepeat(reel))
 
-                if (canDelete && onDelete != null) {
-                    Box(
-                        modifier = Modifier
-                            .size(28.dp)
-                            .clip(CircleShape)
-                            .background(Color(0x38FFFFFF))
-                            .clickable(onClick = onDelete),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Close,
-                            contentDescription = "Remove reel",
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp)
-                        )
+                if (canDelete || onDelete != null || onToggleDone != null || onTogglePause != null) {
+                    var menuOpen by remember { mutableStateOf(false) }
+                    Box {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x44000000))
+                                .clickable { menuOpen = true },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.MoreHoriz,
+                                contentDescription = "Reel options",
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = menuOpen,
+                            onDismissRequest = { menuOpen = false }
+                        ) {
+                            if (onClick != null) {
+                                DropdownMenuItem(
+                                    text = { Text("Edit") },
+                                    onClick = {
+                                        menuOpen = false
+                                        onClick()
+                                    }
+                                )
+                            }
+                            if (onToggleDone != null) {
+                                DropdownMenuItem(
+                                    text = { Text(if (reel.done) "Mark not watched" else "Mark watched") },
+                                    onClick = {
+                                        menuOpen = false
+                                        onToggleDone()
+                                    }
+                                )
+                            }
+                            if (onTogglePause != null) {
+                                DropdownMenuItem(
+                                    text = { Text(if (reel.paused) "Resume" else "Pause") },
+                                    onClick = {
+                                        menuOpen = false
+                                        onTogglePause()
+                                    }
+                                )
+                            }
+                            if (onDelete != null) {
+                                DropdownMenuItem(
+                                    text = { Text("Delete", color = RedDot) },
+                                    onClick = {
+                                        menuOpen = false
+                                        onDelete()
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -303,6 +377,13 @@ fun formatPosterRepeat(reel: Reel): String {
                 DayOfWeek.of(it).getDisplayName(TextStyle.SHORT, Locale.getDefault())
             }
             if (days.isBlank()) "Weekly" else days
+        }
+        ScheduleType.MONTHLY -> "Monthly"
+        ScheduleType.YEARLY -> "Yearly"
+        ScheduleType.CUSTOM -> {
+            val n = reel.repeatInterval.coerceAtLeast(1)
+            val u = if (n == 1) reel.repeatUnit.singular else reel.repeatUnit.label.lowercase(Locale.ENGLISH)
+            "Every $n $u"
         }
     }
 }

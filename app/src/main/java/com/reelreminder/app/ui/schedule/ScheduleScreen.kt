@@ -256,7 +256,10 @@ fun ScheduleScreen(
                     }
                 }
 
-                ScheduleType.DAILY -> {
+                ScheduleType.DAILY,
+                ScheduleType.MONTHLY,
+                ScheduleType.YEARLY,
+                ScheduleType.CUSTOM -> {
                     PickerCard(
                         icon = Icons.Outlined.AccessTime,
                         label = stringResource(R.string.time_label),
@@ -508,5 +511,8 @@ private fun NextReminderCard(state: ScheduleUiState) {
 private fun ScheduleType.labelRes(): Int = when (this) {
     ScheduleType.ONCE -> R.string.repeat_once
     ScheduleType.DAILY -> R.string.repeat_daily
-    ScheduleType.WEEKLY -> R.string.repeat_weekly
+    ScheduleType.WEEKLY,
+    ScheduleType.MONTHLY,
+    ScheduleType.YEARLY,
+    ScheduleType.CUSTOM -> R.string.repeat_weekly
 }

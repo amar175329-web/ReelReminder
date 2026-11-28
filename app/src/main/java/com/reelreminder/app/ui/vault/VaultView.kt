@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -63,6 +65,7 @@ import com.reelreminder.app.ui.theme.LightEdge
 import com.reelreminder.app.ui.theme.LightGlass
 import com.reelreminder.app.ui.theme.LightInk
 import com.reelreminder.app.ui.theme.LightMute
+import com.reelreminder.app.ui.theme.LocalAppDarkTheme
 import com.reelreminder.app.ui.theme.TealPrimary
 import com.reelreminder.app.ui.theme.parseColorPair
 
@@ -150,7 +153,7 @@ private fun VaultCollectionsList(
     onOpenNewCategory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isDark = isSystemInDarkTheme()
+    val isDark = LocalAppDarkTheme.current
     val inkColor = if (isDark) DarkInk else LightInk
     val muteColor = if (isDark) DarkMute else LightMute
 
@@ -158,8 +161,10 @@ private fun VaultCollectionsList(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 18.dp, vertical = 20.dp)
-            .padding(bottom = 120.dp)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 18.dp, vertical = 16.dp)
+            .padding(bottom = 160.dp)
     ) {
         Text(
             text = stringResource(R.string.tab_vault),
@@ -329,7 +334,7 @@ private fun CategoryDetailView(
     onEditReel: (Reel) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isDark = isSystemInDarkTheme()
+    val isDark = LocalAppDarkTheme.current
     val inkColor = if (isDark) DarkInk else LightInk
     val muteColor = if (isDark) DarkMute else LightMute
 
@@ -340,8 +345,10 @@ private fun CategoryDetailView(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 18.dp, vertical = 18.dp)
-            .padding(bottom = 120.dp)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 18.dp, vertical = 16.dp)
+            .padding(bottom = 160.dp)
     ) {
         // Back Pill "‹ Vault"
         Box(

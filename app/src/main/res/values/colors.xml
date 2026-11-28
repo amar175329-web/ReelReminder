@@ -3,6 +3,6 @@
     <color name="app_background_light">#F7FCFC</color>
     <color name="app_background_dark">#061615</color>
     <color name="brand_primary">#14B8A6</color>
-    <color name="ic_launcher_background">#04201F</color>
+    <color name="ic_launcher_background">#CFF6F0</color>
     <color name="notification_color">#14B8A6</color>
 </resources>

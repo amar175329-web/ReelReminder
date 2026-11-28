@@ -23,15 +23,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.reelreminder.app.ui.theme.ThemeMode
 import com.reelreminder.app.util.OpenMethod
 import com.reelreminder.app.util.ShareDiagnosticSnapshot
 
 @Composable
 fun SettingsDialog(
+    themeMode: ThemeMode,
+    onSelectThemeMode: (ThemeMode) -> Unit,
     selectedMethod: OpenMethod,
     lastShared: ShareDiagnosticSnapshot?,
     onSelectMethod: (OpenMethod) -> Unit,
     onCreateReelWithoutLink: () -> Unit,
+    onExportBackup: () -> Unit,
+    onImportBackup: () -> Unit,
+    onDeleteAllData: () -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
@@ -49,6 +55,33 @@ fun SettingsDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                Text(
+                    text = "Theme",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                ThemeMode.entries.forEach { mode ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelectThemeMode(mode) }
+                            .padding(vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = mode == themeMode,
+                            onClick = { onSelectThemeMode(mode) }
+                        )
+                        Text(
+                            text = mode.label,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(start = 6.dp)
+                        )
+                    }
+                }
+                HorizontalDivider()
                 Text(
                     text = "Open method (ADR-3)",
                     fontWeight = FontWeight.Bold,
@@ -89,6 +122,40 @@ fun SettingsDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Create reel without link")
+                }
+                HorizontalDivider()
+                Text(
+                    text = "Data & Privacy",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onExportBackup,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Export JSON", fontSize = 12.sp)
+                    }
+                    OutlinedButton(
+                        onClick = onImportBackup,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Import JSON", fontSize = 12.sp)
+                    }
+                }
+                OutlinedButton(
+                    onClick = onDeleteAllData,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Delete all my data",
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 HorizontalDivider()

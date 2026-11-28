@@ -45,6 +45,7 @@ import com.reelreminder.app.ui.theme.LightEdge
 import com.reelreminder.app.ui.theme.LightGlass
 import com.reelreminder.app.ui.theme.LightInk
 import com.reelreminder.app.ui.theme.LightMute
+import com.reelreminder.app.ui.theme.LocalAppDarkTheme
 import com.reelreminder.app.ui.theme.TealDark
 import com.reelreminder.app.ui.theme.TealPrimary
 
@@ -60,7 +61,7 @@ fun FloatingGlassNav(
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isDark = isSystemInDarkTheme()
+    val isDark = LocalAppDarkTheme.current
     val pillBg = if (isDark) DarkGlass else LightGlass
     val pillEdge = if (isDark) DarkEdge else LightEdge
 
@@ -140,7 +141,7 @@ private fun NavTabButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isDark = isSystemInDarkTheme()
+    val isDark = LocalAppDarkTheme.current
     val activeBg = if (isDark) DarkChip else LightChip
     val activeColor = TealDark
     val inactiveColor = if (isDark) DarkMute else LightMute

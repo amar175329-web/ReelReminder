@@ -46,23 +46,29 @@ class AlarmReceiver : BroadcastReceiver() {
                         app.repository.markDone(reel.id)
                     }
 
-                    ScheduleType.DAILY, ScheduleType.WEEKLY -> {
-                        // Base the next occurrence on the scheduled time, not
-                        // just "now", so an early or late alarm cannot skip a
-                        // whole day.
+                    ScheduleType.DAILY,
+                    ScheduleType.WEEKLY,
+                    ScheduleType.MONTHLY,
+                    ScheduleType.YEARLY,
+                    ScheduleType.CUSTOM -> {
+                        val updatedReel = reel.copy(firedCount = reel.firedCount + 1)
                         val scheduledBase = maxOf(
                             System.currentTimeMillis(),
                             reel.nextTriggerAt
                         )
                         val next = NextTriggerCalculator.nextAfter(
-                            reel = reel,
+                            reel = updatedReel,
                             from = Instant.ofEpochMilli(scheduledBase).plusSeconds(1)
                         )
-                        app.repository.updateNextTrigger(reel.id, next)
-                        AlarmScheduler(context).schedule(
-                            reel = reel.copy(nextTriggerAt = next),
-                            triggerAt = next
-                        )
+                        if (next > 0L) {
+                            app.repository.update(updatedReel.copy(nextTriggerAt = next))
+                            AlarmScheduler(context).schedule(
+                                reel = updatedReel.copy(nextTriggerAt = next),
+                                triggerAt = next
+                            )
+                        } else {
+                            app.repository.update(updatedReel.copy(done = true, nextTriggerAt = 0L))
+                        }
                     }
                 }
             } catch (throwable: Throwable) {

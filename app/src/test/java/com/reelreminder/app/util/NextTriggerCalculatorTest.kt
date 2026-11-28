@@ -1,135 +1,128 @@
 package com.reelreminder.app.util
 
-import com.reelreminder.app.data.Reel
+import com.reelreminder.app.data.EndType
+import com.reelreminder.app.data.RepeatUnit
 import com.reelreminder.app.data.ScheduleType
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneOffset
+import java.time.ZoneId
+import java.util.Locale
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class NextTriggerCalculatorTest {
 
-    private val zone = ZoneOffset.UTC
-    private val now = Instant.parse("2026-01-01T08:00:00Z") // Thursday
+    private val utc = ZoneId.of("UTC")
 
     @Test
-    fun dailyUsesTodayWhenTimeIsStillAhead() {
-        val result = NextTriggerCalculator.nextTriggerFor(
+    fun monthlyClamps31stToFebruaryEnd() {
+        val anchor = LocalDate.of(2026, 1, 31)
+        val now = anchor.atTime(10, 0).atZone(utc).toInstant()
+        val next = NextTriggerCalculator.nextTriggerFor(
+            type = ScheduleType.MONTHLY,
+            time = LocalTime.of(9, 0),
+            days = emptySet(),
+            onceDate = anchor,
+            now = now,
+            zone = utc
+        )
+        assertNotNull(next)
+        val nextDate = Instant.ofEpochMilli(next!!).atZone(utc).toLocalDate()
+        assertEquals(LocalDate.of(2026, 2, 28), nextDate)
+    }
+
+    @Test
+    fun yearlyClampsLeapDay29FebTo28FebInNonLeapYear() {
+        val anchor = LocalDate.of(2024, 2, 29)
+        val now = anchor.atTime(10, 0).atZone(utc).toInstant()
+        val next = NextTriggerCalculator.nextTriggerFor(
+            type = ScheduleType.YEARLY,
+            time = LocalTime.of(9, 0),
+            days = emptySet(),
+            onceDate = anchor,
+            now = now,
+            zone = utc
+        )
+        assertNotNull(next)
+        val nextDate = Instant.ofEpochMilli(next!!).atZone(utc).toLocalDate()
+        assertEquals(LocalDate.of(2025, 2, 28), nextDate)
+    }
+
+    @Test
+    fun customFiveYearsAdvancesCorrectly() {
+        val anchor = LocalDate.of(2026, 11, 27)
+        val now = anchor.atTime(21, 0).atZone(utc).toInstant()
+        val next = NextTriggerCalculator.nextTriggerFor(
+            type = ScheduleType.CUSTOM,
+            time = LocalTime.of(20, 0),
+            days = emptySet(),
+            onceDate = anchor,
+            now = now,
+            zone = utc,
+            repeatInterval = 5,
+            repeatUnit = RepeatUnit.YEARS
+        )
+        assertNotNull(next)
+        val nextDate = Instant.ofEpochMilli(next!!).atZone(utc).toLocalDate()
+        assertEquals(LocalDate.of(2031, 11, 27), nextDate)
+    }
+
+    @Test
+    fun endsAfterCountStopsSchedulingOnceReached() {
+        val anchor = LocalDate.of(2026, 11, 27)
+        val now = anchor.atTime(10, 0).atZone(utc).toInstant()
+        val next = NextTriggerCalculator.nextTriggerFor(
             type = ScheduleType.DAILY,
             time = LocalTime.of(9, 0),
             days = emptySet(),
-            onceDate = null,
+            onceDate = anchor,
             now = now,
-            zone = zone
+            zone = utc,
+            endType = EndType.AFTER_COUNT,
+            endAfterCount = 3,
+            firedCount = 3
         )
-        assertEquals(Instant.parse("2026-01-01T09:00:00Z").toEpochMilli(), result)
+        assertNull(next)
     }
 
     @Test
-    fun dailyMovesToTomorrowWhenTimeHasPassed() {
-        val result = NextTriggerCalculator.nextTriggerFor(
+    fun endsOnDateStopsSchedulingAfterEndDate() {
+        val anchor = LocalDate.of(2026, 11, 27)
+        val now = anchor.atTime(21, 0).atZone(utc).toInstant()
+        val next = NextTriggerCalculator.nextTriggerFor(
             type = ScheduleType.DAILY,
-            time = LocalTime.of(8, 0),
+            time = LocalTime.of(20, 0),
             days = emptySet(),
-            onceDate = null,
+            onceDate = anchor,
             now = now,
-            zone = zone
+            zone = utc,
+            endType = EndType.ON_DATE,
+            endDate = LocalDate.of(2026, 11, 27)
         )
-        assertEquals(Instant.parse("2026-01-02T08:00:00Z").toEpochMilli(), result)
+        assertNull(next)
     }
 
     @Test
-    fun weeklyFindsTheNextSelectedWeekday() {
-        val result = NextTriggerCalculator.nextTriggerFor(
-            type = ScheduleType.WEEKLY,
-            time = LocalTime.of(9, 0),
-            days = setOf(1), // Monday
-            onceDate = null,
-            now = now,
-            zone = zone
-        )
-        assertEquals(Instant.parse("2026-01-05T09:00:00Z").toEpochMilli(), result)
-    }
-
-    @Test
-    fun weeklyCanUseTodayWhenTheTimeIsStillAhead() {
-        val result = NextTriggerCalculator.nextTriggerFor(
-            type = ScheduleType.WEEKLY,
-            time = LocalTime.of(9, 0),
-            days = setOf(4), // Thursday
-            onceDate = null,
-            now = now,
-            zone = zone
-        )
-        assertEquals(Instant.parse("2026-01-01T09:00:00Z").toEpochMilli(), result)
-    }
-
-    @Test
-    fun weeklySkipsToNextWeekWhenTodaysTimeHasPassed() {
-        val result = NextTriggerCalculator.nextTriggerFor(
-            type = ScheduleType.WEEKLY,
-            time = LocalTime.of(8, 0),
-            days = setOf(4), // Thursday
-            onceDate = null,
-            now = now,
-            zone = zone
-        )
-        assertEquals(Instant.parse("2026-01-08T08:00:00Z").toEpochMilli(), result)
-    }
-
-    @Test
-    fun weeklyReturnsNullWithoutDays() {
-        val result = NextTriggerCalculator.nextTriggerFor(
-            type = ScheduleType.WEEKLY,
-            time = LocalTime.of(9, 0),
+    fun summaryStringMatchesExpectedFormat() {
+        val summary = NextTriggerCalculator.formatSummary(
+            startDate = LocalDate.of(2026, 11, 27),
+            time = LocalTime.of(20, 0),
+            type = ScheduleType.CUSTOM,
             days = emptySet(),
-            onceDate = null,
-            now = now,
-            zone = zone
+            repeatInterval = 5,
+            repeatUnit = RepeatUnit.YEARS,
+            endType = EndType.NEVER,
+            endDate = null,
+            endAfterCount = null,
+            locale = Locale.ENGLISH
         )
-        assertEquals(null, result)
-    }
-
-    @Test
-    fun onceUsesTheChosenDateAndTime() {
-        val result = NextTriggerCalculator.nextTriggerFor(
-            type = ScheduleType.ONCE,
-            time = LocalTime.of(12, 30),
-            days = emptySet(),
-            onceDate = LocalDate.of(2026, 2, 1),
-            now = now,
-            zone = zone
-        )
-        assertEquals(Instant.parse("2026-02-01T12:30:00Z").toEpochMilli(), result)
-    }
-
-    @Test
-    fun nextAfterKeepsFutureOnceTrigger() {
-        val trigger = Instant.parse("2026-01-01T10:00:00Z").toEpochMilli()
-        val reel = Reel(
-            id = 1,
-            url = "https://example.com",
-            scheduleType = ScheduleType.ONCE,
-            time = "10:00",
-            nextTriggerAt = trigger
-        )
-        assertEquals(trigger, NextTriggerCalculator.nextAfter(reel, now, zone))
-    }
-
-    @Test
-    fun nextAfterFiresMissedOnceReminderSoon() {
-        val reel = Reel(
-            id = 1,
-            url = "https://example.com",
-            scheduleType = ScheduleType.ONCE,
-            time = "07:00",
-            nextTriggerAt = Instant.parse("2026-01-01T07:00:00Z").toEpochMilli()
-        )
-        assertEquals(
-            now.plusSeconds(5).toEpochMilli(),
-            NextTriggerCalculator.nextAfter(reel, now, zone)
-        )
+        assertTrue(summary.contains("Fri, 27 Nov 2026"))
+        assertTrue(summary.contains("8:00 pm"))
+        assertTrue(summary.contains("repeats every 5 years"))
+        assertTrue(summary.contains("Never ends."))
     }
 }

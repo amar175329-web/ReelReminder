@@ -79,4 +79,11 @@ fun repeatLabel(reel: Reel): String = when (reel.scheduleType) {
             stringResource(R.string.weekly_days, days)
         }
     }
+    ScheduleType.MONTHLY -> "Monthly"
+    ScheduleType.YEARLY -> "Yearly"
+    ScheduleType.CUSTOM -> {
+        val n = reel.repeatInterval.coerceAtLeast(1)
+        val u = if (n == 1) reel.repeatUnit.singular else reel.repeatUnit.label.lowercase(Locale.ENGLISH)
+        "Every $n $u"
+    }
 }

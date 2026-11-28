@@ -56,4 +56,13 @@ interface ReelDao {
 
     @Query("UPDATE reels SET categoryId = :newCategoryId WHERE categoryId = :oldCategoryId")
     suspend fun reassignCategory(oldCategoryId: Long, newCategoryId: Long)
+
+    @Query("DELETE FROM reels WHERE categoryId = :categoryId")
+    suspend fun deleteByCategory(categoryId: Long)
+
+    @Query("DELETE FROM reels")
+    suspend fun deleteAll()
+
+    @Query("SELECT * FROM reels")
+    suspend fun getAll(): List<Reel>
 }

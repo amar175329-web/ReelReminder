@@ -5,7 +5,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
+
+enum class ThemeMode(val label: String) {
+    LIGHT("Light (Default)"),
+    DARK("Dark"),
+    SYSTEM("System")
+}
+
+val LocalAppDarkTheme = compositionLocalOf { false }
 
 private val LightColors = lightColorScheme(
     primary = TealPrimary,
@@ -18,7 +28,7 @@ private val LightColors = lightColorScheme(
     onSecondaryContainer = Color(0xFF082A29),
     background = LightB1,
     onBackground = LightInk,
-    surface = LightGlass,
+    surface = Color.White,
     onSurface = LightInk,
     surfaceVariant = LightChip,
     onSurfaceVariant = LightMute,
@@ -38,7 +48,7 @@ private val DarkColors = darkColorScheme(
     onSecondaryContainer = DarkInk,
     background = DarkB1,
     onBackground = DarkInk,
-    surface = DarkGlass,
+    surface = DarkB2,
     onSurface = DarkInk,
     surfaceVariant = DarkChip,
     onSurfaceVariant = DarkMute,
@@ -49,12 +59,19 @@ private val DarkColors = darkColorScheme(
 
 @Composable
 fun ReelReminderTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: ThemeMode = ThemeMode.LIGHT,
     content: @Composable () -> Unit
 ) {
-    MaterialTheme(
-        colorScheme = if (darkTheme) DarkColors else LightColors,
-        typography = AppTypography,
-        content = content
-    )
+    val isDark = when (themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
+    CompositionLocalProvider(LocalAppDarkTheme provides isDark) {
+        MaterialTheme(
+            colorScheme = if (isDark) DarkColors else LightColors,
+            typography = AppTypography,
+            content = content
+        )
+    }
 }
