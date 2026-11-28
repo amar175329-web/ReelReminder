@@ -20,7 +20,8 @@ import androidx.core.graphics.drawable.IconCompat
 import com.reelreminder.app.ui.AppViewModel
 import com.reelreminder.app.ui.ReelReminderApp
 import com.reelreminder.app.ui.theme.ReelReminderTheme
-import com.reelreminder.app.util.UrlExtractor
+import com.reelreminder.app.util.ShareCaptureParser
+import com.reelreminder.app.util.ShareDiagnosticsStore
 
 class MainActivity : ComponentActivity() {
 
@@ -68,12 +69,19 @@ class MainActivity : ComponentActivity() {
 
         val text = intent.getStringExtra(Intent.EXTRA_TEXT)
             ?: intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
-        val url = UrlExtractor.extractFirstUrl(text)
+        val extraKeys = intent.extras?.keySet()?.toList().orEmpty()
+        val snapshot = ShareCaptureParser.parse(
+            rawText = text,
+            mimeType = intent.type,
+            extraKeys = extraKeys
+        )
+        ShareDiagnosticsStore.save(this, snapshot)
 
-        if (url != null) {
-            viewModel.onSharedUrl(url)
+        val canonicalUrl = snapshot.extractedUrl
+        if (canonicalUrl != null) {
+            viewModel.onSharedUrl(canonicalUrl)
         } else {
-            Toast.makeText(this, R.string.share_no_link, Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Only Instagram reel links work", Toast.LENGTH_LONG).show()
         }
 
         // Do not process the same share twice if the activity is reused.

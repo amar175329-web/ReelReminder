@@ -1,6 +1,8 @@
 package com.reelreminder.app.ui.settings
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,10 +24,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.reelreminder.app.util.OpenMethod
+import com.reelreminder.app.util.ShareDiagnosticSnapshot
 
 @Composable
 fun SettingsDialog(
     selectedMethod: OpenMethod,
+    lastShared: ShareDiagnosticSnapshot?,
     onSelectMethod: (OpenMethod) -> Unit,
     onCreateReelWithoutLink: () -> Unit,
     onDismiss: () -> Unit
@@ -40,7 +44,9 @@ fun SettingsDialog(
         },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
@@ -83,6 +89,32 @@ fun SettingsDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Create reel without link")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Last shared (diagnostics)",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (lastShared == null) {
+                    Text(
+                        text = "No share received yet.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    Text(
+                        text = "MIME: ${lastShared.mimeType}\n" +
+                            "Link: ${lastShared.extractedUrl ?: "none"}\n" +
+                            "Shortcode: ${lastShared.shortcode ?: "none"}\n" +
+                            "Stream extra: ${if (lastShared.hasStreamExtra) "YES" else "NO"}\n" +
+                            "Extra keys: ${lastShared.extraKeys.joinToString(", ").ifBlank { "none" }}",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         },

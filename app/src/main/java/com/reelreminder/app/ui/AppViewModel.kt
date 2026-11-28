@@ -12,6 +12,7 @@ import com.reelreminder.app.data.Reel
 import com.reelreminder.app.notifications.NotificationHelper
 import com.reelreminder.app.ui.components.AppTab
 import com.reelreminder.app.util.NextTriggerCalculator
+import com.reelreminder.app.util.ShortcodeParser
 import com.reelreminder.app.util.UrlExtractor
 import java.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -81,9 +82,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         val clip = clipboard.primaryClip ?: return
         if (clip.itemCount == 0) return
         val text = clip.getItemAt(0)?.text?.toString() ?: return
-        val url = UrlExtractor.extractFirstUrl(text)
-        if (url != null && url != lastDismissedClipboardUrl && _pendingShareUrl.value == null) {
-            _clipboardUrl.value = url
+        val parsed = ShortcodeParser.extractFromText(text) ?: return
+        val alreadySaved = reels.value.any { existing ->
+            ShortcodeParser.parse(existing.url)?.shortcode == parsed.shortcode
+        }
+        if (!alreadySaved && parsed.canonicalUrl != lastDismissedClipboardUrl && _pendingShareUrl.value == null) {
+            _clipboardUrl.value = parsed.canonicalUrl
         }
     }
 

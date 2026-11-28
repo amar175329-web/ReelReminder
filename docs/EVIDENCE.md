@@ -27,3 +27,17 @@
 - **Environment:** Linux local build host, AGP 8.7.3, `compileSdk = 36`, `targetSdk = 36`, local `/root/.android/debug.keystore`.
 - **Output summary:** `BUILD SUCCESSFUL in 2m 13s`. `lintDebug` 0 errors. `testDebugUnitTest` passed 100% including `ReelOpenerTest.missingOrInvalidLinkReturnsMissingLinkWithZeroLauncherCalls` (0 launcher calls for empty/blank/non-shortcode URLs). Added Settings > Debug > "Create reel without link" helper.
 - **Label:** REAL (code, lint, unit tests, local debug build) | NOT RUN (device check A6 — pending Milestone A gate)
+
+## Issue 4 — Share Capture, Diagnostics ("Last shared"), and Clipboard Dedup
+- **Command:** `cd /root/work/reelreminder && ./gradlew lintDebug testDebugUnitTest assembleDebug`
+- **Date:** 2026-11-28
+- **Environment:** Linux local build host, AGP 8.7.3, `compileSdk = 36`, `targetSdk = 36`, local `/root/.android/debug.keystore`.
+- **Output summary:** `BUILD SUCCESSFUL in 1m 41s`. `lintDebug` 0 errors. `testDebugUnitTest` passed 100% including `ShareCaptureParserTest`. Added `ShareDiagnosticsStore` + `Settings > Debug > Last shared` panel (MIME, extra keys, canonical link, shortcode, stream extra flag) and clipboard dedup check.
+- **Label:** REAL (code, lint, unit tests, local debug build) | NOT RUN (device checks A7, A8 — pending Milestone A gate)
+
+## Milestone A Gate — Pre-release v6-mA APK Artifact
+- **Command:** `sha256sum app/build/outputs/apk/debug/app-debug.apk && stat -c "bytes=%s" app/build/outputs/apk/debug/app-debug.apk`
+- **Date:** 2026-11-28
+- **Environment:** Local build host with original `/root/.android/debug.keystore` (same signing key as `v3.0.0`).
+- **Output summary:** `app-debug.apk` = `18973084` bytes, SHA-256 = `f730e89a12491f5fbd6d713ef3b239ce60511e34431d065103efafa3cfd2a10e`.
+- **Label:** REAL

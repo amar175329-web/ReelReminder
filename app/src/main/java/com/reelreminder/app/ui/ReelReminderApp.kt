@@ -49,6 +49,7 @@ import com.reelreminder.app.util.DebugPrefs
 import com.reelreminder.app.util.OpenMethod
 import com.reelreminder.app.util.OpenResult
 import com.reelreminder.app.util.ReelOpener
+import com.reelreminder.app.util.ShareDiagnosticsStore
 import kotlinx.coroutines.launch
 
 @Composable
@@ -283,8 +284,10 @@ fun ReelReminderApp(
     }
 
     if (showSettings) {
+        val lastShared = remember(showSettings) { ShareDiagnosticsStore.load(context) }
         SettingsDialog(
             selectedMethod = selectedOpenMethod,
+            lastShared = lastShared,
             onSelectMethod = { method ->
                 selectedOpenMethod = method
                 DebugPrefs.setOpenMethod(context, method)

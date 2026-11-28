@@ -6,7 +6,7 @@ Source: real-device testing by the owner (labels: REAL = observed by owner). Do 
 | 1 | A | Play opens a different reel (Today, Vault, collection) | PARTIAL |
 | 2 | A | Notification tap opens a different reel | PARTIAL |
 | 3 | A | Play on a reel with no saved link must say "Not saved" | PARTIAL |
-| 4 | A | Share capture, share-sheet visibility, diagnostics | TODO |
+| 4 | A | Share capture, share-sheet visibility, diagnostics | PARTIAL |
 | 5 | B | Content overlaps status bar / nav bar; screens must scroll | TODO |
 | 6 | B | Theme too dark; big circle looks like foreground | TODO |
 | 7 | B | Logo too dark; app icon + notification icon | TODO |
